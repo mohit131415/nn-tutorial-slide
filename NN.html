@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>N.N. Tutorials Image Carousel</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            position: fixed;
+            background-color: #000;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            color: white;
+        }
+        
+        /* Main carousel container */
+        .carousel-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+        
+        /* Slide container */
+        .slide {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            z-index: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 1.5s ease;
+        }
+        
+        .slide.active {
+            opacity: 1;
+            z-index: 2;
+        }
+        
+        /* Transition effects */
+        .effect-fade-in {
+            transform: scale(1);
+        }
+        
+        .effect-zoom-in {
+            transform: scale(1.2);
+        }
+        
+        .effect-zoom-out {
+            transform: scale(0.8);
+        }
+        
+        .effect-slide-left {
+            transform: translateX(-100px);
+        }
+        
+        .effect-slide-right {
+            transform: translateX(100px);
+        }
+        
+        .effect-slide-up {
+            transform: translateY(-100px);
+        }
+        
+        .effect-slide-down {
+            transform: translateY(100px);
+        }
+        
+        .effect-rotate {
+            transform: rotate(5deg);
+        }
+        
+        /* Background image with blur */
+        .slide-background {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-size: cover;
+            background-position: center;
+            filter: blur(20px) brightness(0.6);
+            transform: scale(1.2);
+            z-index: 0;
+            animation: zoomBackground 10s infinite alternate ease-in-out;
+        }
+        
+        @keyframes zoomBackground {
+            0% {
+                transform: scale(1.2);
+            }
+            100% {
+                transform: scale(1.4);
+            }
+        }
+        
+        /* Foreground image container */
+        .slide-content {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .slide-content img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        /* Indicators */
+        .carousel-indicators {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 15px;
+            z-index: 10;
+        }
+        
+        .indicator {
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .indicator.active {
+            background-color: white;
+            transform: scale(1.2);
+            border-color: white;
+        }
+        
+        .indicator:hover {
+            background-color: rgba(255, 255, 255, 0.8);
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .carousel-indicators {
+                bottom: 15px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .indicator {
+                width: 12px;
+                height: 12px;
+            }
+            
+            .carousel-indicators {
+                bottom: 10px;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="carousel-container" id="carousel">
+        <!-- Slides will be dynamically generated here -->
+        
+        <!-- Indicators will be dynamically generated here -->
+        <div class="carousel-indicators" id="indicators"></div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // ===== CONFIGURATION =====
+            
+            // Array of image data - EASILY ADD MORE IMAGES HERE
+            const imageData = [
+                {
+                    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-04-15%20174426-PONM9GF3aDy6JxdfmHaTUeZUtatYeU.png',
+                    alt: 'N.N. Tutorials - Career Options After 10th'
+                },
+                {
+                    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-04-15%20174449-5IBwDTmljZa2hOFOFa6ELilq5jXJOK.png',
+                    alt: 'N.N. Tutorials - Programming Paths'
+                },
+                {
+                    src: 'https://hebbkx1anhila5yf.public.blob.vercel-storage.com/Screenshot%202025-04-15%20174522-tcoOzAcBVLpxOGDKn2Nxeh1BKK0m1R.png',
+                    alt: 'N.N. Tutorials - Course Offerings'
+                }
+                // Add more images by copying the format above
+                // Example:
+                // {
+                //     src: 'https://your-image-url.jpg',
+                //     alt: 'Image description'
+                // },
+            ];
+            
+            // Array of transition effects
+            const transitionEffects = [
+                'effect-fade-in',
+                'effect-zoom-in',
+                'effect-zoom-out',
+                'effect-slide-left',
+                'effect-slide-right',
+                'effect-slide-up',
+                'effect-slide-down',
+                'effect-rotate'
+            ];
+            
+            // Slide duration in milliseconds
+            const slideDuration = 5000;
+            
+            // ===== INITIALIZATION =====
+            
+            const carousel = document.getElementById('carousel');
+            const indicatorsContainer = document.getElementById('indicators');
+            
+            let currentIndex = 0;
+            let slideInterval;
+            let currentEffect = '';
+            
+            // Generate slides and indicators
+            function initializeCarousel() {
+                // Generate slides
+                imageData.forEach((image, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = `slide ${index === 0 ? 'active' : ''}`;
+                    
+                    // Create background
+                    const background = document.createElement('div');
+                    background.className = 'slide-background';
+                    background.style.backgroundImage = `url(${image.src})`;
+                    
+                    // Create content
+                    const content = document.createElement('div');
+                    content.className = 'slide-content';
+                    
+                    const img = document.createElement('img');
+                    img.src = image.src;
+                    img.alt = image.alt;
+                    
+                    content.appendChild(img);
+                    slide.appendChild(background);
+                    slide.appendChild(content);
+                    carousel.appendChild(slide);
+                    
+                    // Create indicator
+                    const indicator = document.createElement('div');
+                    indicator.className = `indicator ${index === 0 ? 'active' : ''}`;
+                    indicator.dataset.index = index;
+                    indicator.addEventListener('click', function() {
+                        goToSlide(parseInt(this.dataset.index));
+                    });
+                    indicatorsContainer.appendChild(indicator);
+                });
+                
+                // Apply initial random effect
+                applyRandomEffect();
+            }
+            
+            // Get a random effect
+            function getRandomEffect() {
+                let newEffect;
+                do {
+                    newEffect = transitionEffects[Math.floor(Math.random() * transitionEffects.length)];
+                } while (newEffect === currentEffect && transitionEffects.length > 1);
+                
+                currentEffect = newEffect;
+                return newEffect;
+            }
+            
+            // Apply a random effect to the active slide
+            function applyRandomEffect() {
+                const slides = document.querySelectorAll('.slide');
+                const effect = getRandomEffect();
+                
+                slides.forEach(slide => {
+                    // Remove all effect classes
+                    transitionEffects.forEach(effectClass => {
+                        slide.classList.remove(effectClass);
+                    });
+                    
+                    // Add the new effect class to the active slide
+                    if (slide.classList.contains('active')) {
+                        slide.classList.add(effect);
+                    }
+                });
+            }
+            
+            // Go to a specific slide
+            function goToSlide(index) {
+                const slides = document.querySelectorAll('.slide');
+                const indicators = document.querySelectorAll('.indicator');
+                
+                // Update current index
+                currentIndex = index;
+                
+                // Apply random effect
+                applyRandomEffect();
+                
+                // Update slides
+                slides.forEach((slide, i) => {
+                    if (i === currentIndex) {
+                        slide.classList.add('active');
+                    } else {
+                        slide.classList.remove('active');
+                    }
+                });
+                
+                // Update indicators
+                indicators.forEach((indicator, i) => {
+                    if (i === currentIndex) {
+                        indicator.classList.add('active');
+                    } else {
+                        indicator.classList.remove('active');
+                    }
+                });
+                
+                // Reset interval
+                resetInterval();
+            }
+            
+            // Go to the next slide
+            function nextSlide() {
+                const nextIndex = (currentIndex + 1) % imageData.length;
+                goToSlide(nextIndex);
+            }
+            
+            // Go to the previous slide
+            function prevSlide() {
+                const prevIndex = (currentIndex - 1 + imageData.length) % imageData.length;
+                goToSlide(prevIndex);
+            }
+            
+            // Reset the auto-slide interval
+            function resetInterval() {
+                clearInterval(slideInterval);
+                slideInterval = setInterval(nextSlide, slideDuration);
+            }
+            
+            // Initialize the carousel
+            initializeCarousel();
+            
+            // Start auto-sliding
+            slideInterval = setInterval(nextSlide, slideDuration);
+            
+            // ===== EVENT LISTENERS =====
+            
+            // Swipe functionality for touch devices
+            let touchStartX = 0;
+            let touchEndX = 0;
+            
+            document.addEventListener('touchstart', function(e) {
+                touchStartX = e.changedTouches[0].screenX;
+            }, false);
+            
+            document.addEventListener('touchend', function(e) {
+                touchEndX = e.changedTouches[0].screenX;
+                handleSwipe();
+            }, false);
+            
+            function handleSwipe() {
+                const swipeThreshold = 50;
+                if (touchEndX < touchStartX - swipeThreshold) {
+                    // Swipe left - next slide
+                    nextSlide();
+                } else if (touchEndX > touchStartX + swipeThreshold) {
+                    // Swipe right - previous slide
+                    prevSlide();
+                }
+            }
+            
+            // Keyboard navigation
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'ArrowLeft') {
+                    prevSlide();
+                } else if (e.key === 'ArrowRight') {
+                    nextSlide();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
